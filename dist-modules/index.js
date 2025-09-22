@@ -47,16 +47,22 @@ function useGeolocated(config = {}) {
         onSuccess === null || onSuccess === void 0 ? void 0 : onSuccess(position);
     }, [onSuccess, cancelUserDecisionTimeout]);
     const getPosition = (0, react_1.useCallback)(() => {
+        var _a;
         if (!(geolocationProvider === null || geolocationProvider === void 0 ? void 0 : geolocationProvider.getCurrentPosition) ||
             // we really want to check if the watchPosition is available
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             !geolocationProvider.watchPosition) {
             throw new Error("The provided geolocation provider is invalid");
         }
-        if (userDecisionTimeout) {
+        const supportsPermissionsApi = typeof ((_a = navigator.permissions) === null || _a === void 0 ? void 0 : _a.query) === "function";
+        if (userDecisionTimeout && permissionState !== "granted") {
+            let userTimeout = userDecisionTimeout;
+            if (!supportsPermissionsApi) {
+                userTimeout = Math.max(userDecisionTimeout, (positionOptions === null || positionOptions === void 0 ? void 0 : positionOptions.timeout) || 0);
+            }
             userDecisionTimeoutId.current = window.setTimeout(() => {
                 handlePositionError();
-            }, userDecisionTimeout);
+            }, userTimeout);
         }
         if (watchPosition) {
             watchId.current = geolocationProvider.watchPosition(handlePositionSuccess, handlePositionError, positionOptions);
@@ -71,6 +77,7 @@ function useGeolocated(config = {}) {
         handlePositionError,
         handlePositionSuccess,
         positionOptions,
+        permissionState,
     ]);
     (0, react_1.useEffect)(() => {
         let permission = undefined;

@@ -2,7 +2,6 @@ build/
 docs/build/
 demo/dist
 dist
-dist-modules/
 node_modules/
 coverage/
 .idea/
