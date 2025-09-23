@@ -73,6 +73,10 @@ export interface GeolocatedResult {
      * Callback you can use to manually trigger the position query.
      */
     getPosition: () => void;
+    /**
+     * Callback you can use to manually trigger the position query with cached.
+     */
+    getPositionCached: (ttl: number) => void;
 }
 /**
  * Hook abstracting away the interaction with the Geolocation API.

@@ -46,7 +46,7 @@ function useGeolocated(config = {}) {
         }
         onSuccess === null || onSuccess === void 0 ? void 0 : onSuccess(position);
     }, [onSuccess, cancelUserDecisionTimeout]);
-    const getPosition = (0, react_1.useCallback)(() => {
+    const getPosition = (0, react_1.useCallback)((succeedCallback = handlePositionSuccess, errorCallback = handlePositionError) => {
         var _a;
         if (!(geolocationProvider === null || geolocationProvider === void 0 ? void 0 : geolocationProvider.getCurrentPosition) ||
             // we really want to check if the watchPosition is available
@@ -61,14 +61,14 @@ function useGeolocated(config = {}) {
                 userTimeout = Math.max(userDecisionTimeout, (positionOptions === null || positionOptions === void 0 ? void 0 : positionOptions.timeout) || 0);
             }
             userDecisionTimeoutId.current = window.setTimeout(() => {
-                handlePositionError();
+                errorCallback();
             }, userTimeout);
         }
         if (watchPosition) {
-            watchId.current = geolocationProvider.watchPosition(handlePositionSuccess, handlePositionError, positionOptions);
+            watchId.current = geolocationProvider.watchPosition(succeedCallback, errorCallback, positionOptions);
         }
         else {
-            geolocationProvider.getCurrentPosition(handlePositionSuccess, handlePositionError, positionOptions);
+            geolocationProvider.getCurrentPosition(succeedCallback, errorCallback, positionOptions);
         }
     }, [
         geolocationProvider,
@@ -79,6 +79,15 @@ function useGeolocated(config = {}) {
         positionOptions,
         permissionState,
     ]);
+    const getPositionCached = (0, react_1.useCallback)((cacheTTL = 60 * 1000) => {
+        const now = Date.now();
+        // If we have cached coords and a valid timestamp and it's still fresh, return early.
+        if (timestamp !== undefined && now - timestamp < cacheTTL) {
+            return;
+        }
+        // Call the original getPosition function
+        getPosition();
+    }, [getPosition, handlePositionSuccess, coords, timestamp]);
     (0, react_1.useEffect)(() => {
         let permission = undefined;
         if (watchLocationPermissionChange &&
@@ -117,6 +126,7 @@ function useGeolocated(config = {}) {
     }, [permissionState]); // eslint-disable-line react-hooks/exhaustive-deps
     return {
         getPosition,
+        getPositionCached,
         coords,
         timestamp,
         isGeolocationEnabled,
