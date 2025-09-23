@@ -31,6 +31,28 @@ function useGeolocated(config = {}) {
     const [timestamp, setTimestamp] = (0, react_1.useState)();
     const [positionError, setPositionError] = (0, react_1.useState)();
     const [permissionState, setPermissionState] = (0, react_1.useState)();
+    const shdowIsEqual = (0, react_1.useCallback)((a, b) => {
+        if (a === b)
+            return true;
+        if (!a || !b)
+            return false;
+        return a.accuracy === b.accuracy &&
+            a.altitude === b.altitude &&
+            a.altitudeAccuracy === b.altitudeAccuracy &&
+            a.heading === b.heading &&
+            a.latitude === b.latitude &&
+            a.longitude === b.longitude &&
+            a.speed === b.speed;
+    }, []);
+    const updateCoords = (0, react_1.useCallback)((next) => {
+        setCoords((prev) => {
+            if (shdowIsEqual(prev, next)) {
+                // avoiding unnecessary re-rendering
+                return prev;
+            }
+            return next;
+        });
+    }, []);
     const cancelUserDecisionTimeout = (0, react_1.useCallback)(() => {
         if (userDecisionTimeoutId.current) {
             window.clearTimeout(userDecisionTimeoutId.current);
@@ -48,7 +70,7 @@ function useGeolocated(config = {}) {
     const handlePositionSuccess = (0, react_1.useCallback)((position) => {
         cancelUserDecisionTimeout();
         if (isCurrentlyMounted.current) {
-            setCoords(position.coords);
+            updateCoords(position.coords);
             setTimestamp(position.timestamp);
             setIsGeolocationEnabled(true);
             setPositionError(() => undefined);
