@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.useGeolocated = useGeolocated;
 const react_1 = require("react");
@@ -46,7 +55,7 @@ function useGeolocated(config = {}) {
         }
         onSuccess === null || onSuccess === void 0 ? void 0 : onSuccess(position);
     }, [onSuccess, cancelUserDecisionTimeout]);
-    const getPosition = (0, react_1.useCallback)((succeedCallback = handlePositionSuccess, errorCallback = handlePositionError) => {
+    const getPosition = (0, react_1.useCallback)(() => __awaiter(this, void 0, void 0, function* () {
         var _a;
         if (!(geolocationProvider === null || geolocationProvider === void 0 ? void 0 : geolocationProvider.getCurrentPosition) ||
             // we really want to check if the watchPosition is available
@@ -55,22 +64,33 @@ function useGeolocated(config = {}) {
             throw new Error("The provided geolocation provider is invalid");
         }
         const supportsPermissionsApi = typeof ((_a = navigator.permissions) === null || _a === void 0 ? void 0 : _a.query) === "function";
-        if (userDecisionTimeout && permissionState !== "granted") {
+        let result = undefined;
+        if (supportsPermissionsApi && !permissionState) {
+            try {
+                result = yield navigator.permissions.query({ name: "geolocation" });
+                setPermissionState(result.state);
+            }
+            catch (e) {
+                console.error("Error getting geolocation permission state", e);
+            }
+        }
+        const state = permissionState || (result === null || result === void 0 ? void 0 : result.state);
+        if (userDecisionTimeout && state !== "granted") {
             let userTimeout = userDecisionTimeout;
             if (!supportsPermissionsApi) {
                 userTimeout = Math.max(userDecisionTimeout, (positionOptions === null || positionOptions === void 0 ? void 0 : positionOptions.timeout) || 0);
             }
             userDecisionTimeoutId.current = window.setTimeout(() => {
-                errorCallback();
+                handlePositionError();
             }, userTimeout);
         }
         if (watchPosition) {
-            watchId.current = geolocationProvider.watchPosition(succeedCallback, errorCallback, positionOptions);
+            watchId.current = geolocationProvider.watchPosition(handlePositionSuccess, handlePositionError, positionOptions);
         }
         else {
-            geolocationProvider.getCurrentPosition(succeedCallback, errorCallback, positionOptions);
+            geolocationProvider.getCurrentPosition(handlePositionSuccess, handlePositionError, positionOptions);
         }
-    }, [
+    }), [
         geolocationProvider,
         watchPosition,
         userDecisionTimeout,
