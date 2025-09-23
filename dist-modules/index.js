@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.useGeolocated = useGeolocated;
 const react_1 = require("react");
@@ -52,7 +43,7 @@ function useGeolocated(config = {}) {
             }
             return next;
         });
-    }, []);
+    }, [shdowIsEqual]);
     const cancelUserDecisionTimeout = (0, react_1.useCallback)(() => {
         if (userDecisionTimeoutId.current) {
             window.clearTimeout(userDecisionTimeoutId.current);
@@ -76,35 +67,18 @@ function useGeolocated(config = {}) {
             setPositionError(() => undefined);
         }
         onSuccess === null || onSuccess === void 0 ? void 0 : onSuccess(position);
-    }, [onSuccess, cancelUserDecisionTimeout]);
-    const getPosition = (0, react_1.useCallback)(() => __awaiter(this, void 0, void 0, function* () {
-        var _a;
+    }, [onSuccess, cancelUserDecisionTimeout, updateCoords]);
+    const getPosition = (0, react_1.useCallback)(() => {
         if (!(geolocationProvider === null || geolocationProvider === void 0 ? void 0 : geolocationProvider.getCurrentPosition) ||
             // we really want to check if the watchPosition is available
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             !geolocationProvider.watchPosition) {
             throw new Error("The provided geolocation provider is invalid");
         }
-        const supportsPermissionsApi = typeof ((_a = navigator.permissions) === null || _a === void 0 ? void 0 : _a.query) === "function";
-        let result = undefined;
-        if (supportsPermissionsApi && !permissionState) {
-            try {
-                result = yield navigator.permissions.query({ name: "geolocation" });
-                setPermissionState(result.state);
-            }
-            catch (e) {
-                console.error("Error getting geolocation permission state", e);
-            }
-        }
-        const state = permissionState || (result === null || result === void 0 ? void 0 : result.state);
-        if (userDecisionTimeout && state !== "granted") {
-            let userTimeout = userDecisionTimeout;
-            if (!supportsPermissionsApi) {
-                userTimeout = Math.max(userDecisionTimeout, (positionOptions === null || positionOptions === void 0 ? void 0 : positionOptions.timeout) || 0);
-            }
+        if (userDecisionTimeout && permissionState !== "granted") {
             userDecisionTimeoutId.current = window.setTimeout(() => {
                 handlePositionError();
-            }, userTimeout);
+            }, userDecisionTimeout);
         }
         if (watchPosition) {
             watchId.current = geolocationProvider.watchPosition(handlePositionSuccess, handlePositionError, positionOptions);
@@ -112,7 +86,7 @@ function useGeolocated(config = {}) {
         else {
             geolocationProvider.getCurrentPosition(handlePositionSuccess, handlePositionError, positionOptions);
         }
-    }), [
+    }, [
         geolocationProvider,
         watchPosition,
         userDecisionTimeout,
@@ -129,7 +103,7 @@ function useGeolocated(config = {}) {
         }
         // Call the original getPosition function
         getPosition();
-    }, [getPosition, handlePositionSuccess, coords, timestamp]);
+    }, [getPosition, timestamp]);
     (0, react_1.useEffect)(() => {
         let permission = undefined;
         if (watchLocationPermissionChange &&
