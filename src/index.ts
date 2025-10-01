@@ -117,7 +117,7 @@ export function useGeolocated(config: GeolocatedConfig = {}): GeolocatedResult {
         PermissionState | undefined
     >();
 
-    const shdowIsEqual = useCallback((a: GeolocationCoordinates | undefined, b: GeolocationCoordinates | undefined) => {
+    const sameCoords = useCallback((a: GeolocationCoordinates | undefined, b: GeolocationCoordinates | undefined) => {
         if (a === b) return true;
         if (!a || !b) return false;
         return a.accuracy === b.accuracy &&
@@ -131,13 +131,13 @@ export function useGeolocated(config: GeolocatedConfig = {}): GeolocatedResult {
 
     const updateCoords = useCallback((next?: GeolocationCoordinates) => {
         setCoords((prev) => {
-            if (shdowIsEqual(prev, next)) {
+            if (sameCoords(prev, next)) {
                 // avoiding unnecessary re-rendering
                 return prev; 
             }
             return next;
         });
-    }, [shdowIsEqual]);
+    }, [sameCoords]);
 
     const cancelUserDecisionTimeout = useCallback(() => {
         if (userDecisionTimeoutId.current) {
